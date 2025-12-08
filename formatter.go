@@ -8,6 +8,29 @@ import (
 	"strings"
 )
 
+// Human format icons - easily changeable text/unicode markers
+const (
+	iconPR         = "[PR]"
+	iconStats      = "[Stats]"
+	iconComment    = "[Comment]"
+	iconFile       = "[File]"
+	iconAddition   = "+"
+	iconDeletion   = "-"
+	iconModified   = "~"
+	iconContext    = "*"
+	iconLocation   = "[Context]"
+	iconLine       = "[Line]"
+	iconAuthor     = ">"
+	iconLink       = "[Link]"
+	iconOK         = "[OK]"
+	iconWarning    = "[!]"
+	iconUnresolved = "[X]"
+	iconResolved   = "[/]"
+	iconReply      = "  |->"
+	iconThread     = "[Thread]"
+	iconGeneral    = "[General]"
+)
+
 // FormatComments formats comments for human-readable output
 func FormatComments(response *PRCommentsResponse, format string) (string, error) {
 	switch format {
@@ -35,16 +58,16 @@ func formatJSON(response *PRCommentsResponse) (string, error) {
 func formatHuman(response *PRCommentsResponse) (string, error) {
 	var output strings.Builder
 
-	output.WriteString(fmt.Sprintf("🔍 PR #%d Review Comments (%s/%s)\n",
-		response.PRNumber, response.Owner, response.Repo))
-	output.WriteString(fmt.Sprintf("📊 %d comments across %d files\n",
-		response.Summary.TotalComments, len(response.Summary.FilesAffected)))
+	output.WriteString(fmt.Sprintf("%s PR #%d Review Comments (%s/%s)\n",
+		iconPR, response.PRNumber, response.Owner, response.Repo))
+	output.WriteString(fmt.Sprintf("%s %d comments across %d files\n",
+		iconStats, response.Summary.TotalComments, len(response.Summary.FilesAffected)))
 	output.WriteString("═══════════════════════════════════════════════════════════════\n\n")
 
 	sortedComments := sortParsedComments(response.Comments)
 	for i, comment := range sortedComments {
-		output.WriteString(fmt.Sprintf("💬 Comment %d of %d\n", i+1, len(sortedComments)))
-		output.WriteString(fmt.Sprintf("📁 %s", comment.File))
+		output.WriteString(fmt.Sprintf("%s %d of %d\n", iconComment, i+1, len(sortedComments)))
+		output.WriteString(fmt.Sprintf("%s %s", iconFile, comment.File))
 
 		// Add line information
 		if comment.LineNew != nil {
@@ -54,29 +77,29 @@ func formatHuman(response *PRCommentsResponse) (string, error) {
 		// Add change type indicator
 		switch comment.ChangeType {
 		case "addition":
-			output.WriteString(" ➕ (new)")
+			output.WriteString(fmt.Sprintf(" %s (new)", iconAddition))
 		case "deletion":
-			output.WriteString(" ➖ (deleted)")
+			output.WriteString(fmt.Sprintf(" %s (deleted)", iconDeletion))
 		case "modification":
-			output.WriteString(" ✏️  (modified)")
+			output.WriteString(fmt.Sprintf(" %s (modified)", iconModified))
 		default:
-			output.WriteString(" 📝 (context)")
+			output.WriteString(fmt.Sprintf(" %s (context)", iconContext))
 		}
 		output.WriteString("\n")
 
 		// Add context
-		output.WriteString(fmt.Sprintf("📍 %s\n", comment.Context))
+		output.WriteString(fmt.Sprintf("%s %s\n", iconLocation, comment.Context))
 
 		// Add line content if available
 		if comment.LineContent != "" {
-			output.WriteString(fmt.Sprintf("📄 Line: `%s`\n", strings.TrimSpace(comment.LineContent)))
+			output.WriteString(fmt.Sprintf("%s `%s`\n", iconLine, strings.TrimSpace(comment.LineContent)))
 		}
 
 		// Add comment body
-		output.WriteString(fmt.Sprintf("💭 %s: %s\n", comment.Author, comment.Comment))
+		output.WriteString(fmt.Sprintf("%s %s: %s\n", iconAuthor, comment.Author, comment.Comment))
 
 		// Add link
-		output.WriteString(fmt.Sprintf("🔗 %s\n", comment.HTMLURL))
+		output.WriteString(fmt.Sprintf("%s %s\n", iconLink, comment.HTMLURL))
 
 		// Add separator
 		if i < len(response.Comments)-1 {
@@ -85,7 +108,7 @@ func formatHuman(response *PRCommentsResponse) (string, error) {
 	}
 
 	if len(response.Comments) == 0 {
-		output.WriteString("✅ No review comments found for this PR\n")
+		output.WriteString(fmt.Sprintf("%s No review comments found for this PR\n", iconOK))
 	}
 
 	return output.String(), nil
@@ -223,22 +246,22 @@ func formatJSONV2(response *PRCommentsResponse) (string, error) {
 func formatHumanV2(response *PRCommentsResponse) (string, error) {
 	var output strings.Builder
 
-	output.WriteString(fmt.Sprintf("🔍 PR #%d Review Comments (%s/%s)\n",
-		response.PRNumber, response.Owner, response.Repo))
+	output.WriteString(fmt.Sprintf("%s PR #%d Review Comments (%s/%s)\n",
+		iconPR, response.PRNumber, response.Owner, response.Repo))
 
 	// Enhanced summary with thread counts
-	output.WriteString(fmt.Sprintf("📊 %d unresolved threads, %d resolved\n",
-		response.Summary.UnresolvedThreads,
+	output.WriteString(fmt.Sprintf("%s %d unresolved threads, %d resolved\n",
+		iconStats, response.Summary.UnresolvedThreads,
 		response.Summary.ResolvedThreads))
 
 	if response.Summary.OutdatedThreads > 0 {
-		output.WriteString(fmt.Sprintf("⚠️  %d outdated threads\n",
-			response.Summary.OutdatedThreads))
+		output.WriteString(fmt.Sprintf("%s %d outdated threads\n",
+			iconWarning, response.Summary.OutdatedThreads))
 	}
 
 	if response.Summary.GeneralComments > 0 {
-		output.WriteString(fmt.Sprintf("💬 %d general comments\n",
-			response.Summary.GeneralComments))
+		output.WriteString(fmt.Sprintf("%s %d general comments\n",
+			iconGeneral, response.Summary.GeneralComments))
 	}
 
 	output.WriteString("═══════════════════════════════════════════════════════════════\n\n")
@@ -247,9 +270,9 @@ func formatHumanV2(response *PRCommentsResponse) (string, error) {
 	if len(response.GeneralComments) > 0 {
 		output.WriteString("## General PR Comments\n\n")
 		for i, comment := range response.GeneralComments {
-			output.WriteString(fmt.Sprintf("💬 Comment %d\n", i+1))
-			output.WriteString(fmt.Sprintf("👤 %s: %s\n", comment.Author, comment.Body))
-			output.WriteString(fmt.Sprintf("🔗 %s\n", comment.HTMLURL))
+			output.WriteString(fmt.Sprintf("%s %d\n", iconComment, i+1))
+			output.WriteString(fmt.Sprintf("%s %s: %s\n", iconAuthor, comment.Author, comment.Body))
+			output.WriteString(fmt.Sprintf("%s %s\n", iconLink, comment.HTMLURL))
 			output.WriteString("───────────────────────────────────────────────────────────────\n\n")
 		}
 	}
@@ -261,21 +284,21 @@ func formatHumanV2(response *PRCommentsResponse) (string, error) {
 
 		for i, thread := range sortedThreads {
 			// Thread header with status
-			statusEmoji := "❌"
+			statusIcon := iconUnresolved
 			statusText := "[UNRESOLVED]"
 			if thread.IsResolved {
-				statusEmoji = "✅"
-				statusText = "[RESOLVED] ✓"
+				statusIcon = iconResolved
+				statusText = "[RESOLVED]"
 			}
 
-			output.WriteString(fmt.Sprintf("%s Thread %d of %d %s\n",
-				statusEmoji, i+1, len(response.ReviewThreads), statusText))
+			output.WriteString(fmt.Sprintf("%s %s %d of %d %s\n",
+				statusIcon, iconThread, i+1, len(response.ReviewThreads), statusText))
 
 			if thread.IsOutdated {
-				output.WriteString("⚠️  [OUTDATED]\n")
+				output.WriteString(fmt.Sprintf("%s [OUTDATED]\n", iconWarning))
 			}
 
-			output.WriteString(fmt.Sprintf("📁 %s", thread.File))
+			output.WriteString(fmt.Sprintf("%s %s", iconFile, thread.File))
 			if thread.LineNew != nil {
 				output.WriteString(fmt.Sprintf(":%d", *thread.LineNew))
 			}
@@ -287,13 +310,13 @@ func formatHumanV2(response *PRCommentsResponse) (string, error) {
 			for j, comment := range thread.Comments {
 				indent := ""
 				if comment.IsReply {
-					indent = "  ↳ "
+					indent = iconReply + " "
 				}
-				output.WriteString(fmt.Sprintf("%s💭 %s: %s\n",
-					indent, comment.Author, comment.Body))
+				output.WriteString(fmt.Sprintf("%s%s %s: %s\n",
+					indent, iconAuthor, comment.Author, comment.Body))
 
 				if j == 0 {
-					output.WriteString(fmt.Sprintf("  🔗 %s\n", comment.HTMLURL))
+					output.WriteString(fmt.Sprintf("  %s %s\n", iconLink, comment.HTMLURL))
 				}
 			}
 
@@ -302,7 +325,7 @@ func formatHumanV2(response *PRCommentsResponse) (string, error) {
 	}
 
 	if len(sortedThreads) == 0 && len(response.GeneralComments) == 0 {
-		output.WriteString("✅ No comments found for this PR\n")
+		output.WriteString(fmt.Sprintf("%s No comments found for this PR\n", iconOK))
 	}
 
 	return output.String(), nil
