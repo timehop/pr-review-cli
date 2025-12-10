@@ -6,12 +6,12 @@ The PR review CLI tool fetches GitHub PR review comments using the GitHub GraphQ
 
 ### Install from source
 ```bash
-go install github.com/AObuchow/pr-review-cli@latest
+go install github.com/timehop/pr-review-cli@latest
 ```
 
 ### Build locally
 ```bash
-git clone https://github.com/AObuchow/pr-review-cli
+git clone https://github.com/timehop/pr-review-cli
 cd pr-review-cli
 go build -o pr-review-cli
 ```
